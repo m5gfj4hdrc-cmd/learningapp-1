@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lernzettel Quiz Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+            color: #000000;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border: 2px solid #000000;
+        }
+
+        .header {
+            background: #000000;
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            border-bottom: 2px solid #000000;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .upload-section {
+            border: 2px dashed #000000;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+            background: #ffffff;
+        }
+
+        .upload-section:hover {
+            background: #f5f5f5;
+        }
+
+        .upload-section.dragover {
+            background: #e8e8e8;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .upload-btn {
+            background: #000000;
+            color: white;
+            padding: 15px 40px;
+            border: 2px solid #000000;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        .upload-btn:hover {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .file-list {
+            margin: 20px 0;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: #f5f5f5;
+            border: 1px solid #000000;
+            margin-bottom: 10px;
+        }
+
+        .file-item span {
+            flex: 1;
+        }
+
+        .remove-btn {
+            background: #000000;
+            color: white;
+            border: 1px solid #000000;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .remove-btn:hover {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .settings {
+            background: #f5f5f5;
+            padding: 25px;
+            border: 1px solid #000000;
+            margin-bottom: 25px;
+        }
+
+        .settings h3 {
+            margin-bottom: 20px;
+        }
+
+        .settings label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #000000;
+        }
+
+        .settings input,
+        .settings select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #000000;
+            font-size: 1em;
+            margin-bottom: 20px;
+            background: #ffffff;
+        }
+
+        .settings input:focus,
+        .settings select:focus {
+            outline: none;
+            border: 2px solid #000000;
+        }
+
+        .generate-btn {
+            width: 100%;
+            background: #000000;
+            color: white;
+            padding: 18px;
+            border: 2px solid #000000;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .quiz-section {
+            margin-top: 40px;
+        }
+
+        .quiz-section h2 {
+            margin-bottom: 30px;
+            font-size: 1.5em;
+        }
+
+        .question-card {
+            background: white;
+            border: 2px solid #000000;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .question-header {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #000000;
+        }
+
+        .answer-option {
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 2px solid #000000;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #ffffff;
+        }
+
+        .answer-option:hover {
+            background: #f5f5f5;
+        }
+
+        .answer-option.selected {
+            background: #000000;
+            color: white;
+        }
+
+        .answer-option.correct {
+            background: #000000;
+            color: white;
+        }
+
+        .answer-option.incorrect {
+            background: #ffffff;
+            color: #000000;
+            text-decoration: line-through;
+        }
+
+        .explanation {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-left: 4px solid #000000;
+            display: none;
+        }
+
+        .explanation.show {
+            display: block;
+        }
+
+        .check-btn {
+            background: #000000;
+            color: white;
+            padding: 12px 30px;
+            border: 2px solid #000000;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 1em;
+            transition: all 0.2s;
+        }
+
+        .check-btn:hover {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .results {
+            background: #f5f5f5;
+            padding: 30px;
+            border: 2px solid #000000;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .results h2 {
+            color: #000000;
+            margin-bottom: 15px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #e8e8e8;
+            border-top: 4px solid #000000;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #000000;
+            color: #ffffff;
+            padding: 15px;
+            border: 2px solid #000000;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Lernzettel Quiz Generator</h1>
+            <p>Lade deine Vorlesungsunterlagen hoch und erstelle automatisch ein Quiz zum Lernen</p>
+        </div>
+
+        <div class="content">
+            <div class="upload-section" id="uploadSection">
+                <h2>📄 Dokumente hochladen</h2>
+                <p>Unterstützte Formate: PDF, TXT, Bilder (PNG, JPG)</p>
+                <input type="file" id="fileInput" multiple accept=".pdf,.txt,.png,.jpg,.jpeg">
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    Dateien auswählen
+                </button>
+                <div class="file-list" id="fileList"></div>
+            </div>
+
+            <div class="settings">
+                <h3>⚙️ Quiz-Einstellungen</h3>
+                <label for="numQuestions">Anzahl der Fragen:</label>
+                <input type="number" id="numQuestions" min="3" max="50" value="5">
+
+                <label for="difficulty">Schwierigkeitsgrad:</label>
+                <select id="difficulty">
+                    <option value="einfach">Einfach</option>
+                    <option value="mittel" selected>Mittel</option>
+                    <option value="schwer">Schwer</option>
+                </select>
+
+                <label for="topic">Thema/Veranstaltung (optional):</label>
+                <input type="text" id="topic" placeholder="z.B. Algorithmen und Datenstrukturen">
+            </div>
+
+            <button class="generate-btn" id="generateBtn" onclick="generateQuiz()" disabled>
+                🎯 Quiz generieren
+            </button>
+
+            <div class="error" id="errorMsg"></div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Quiz wird generiert... Das kann einen Moment dauern.</p>
+            </div>
+
+            <div class="quiz-section" id="quizSection"></div>
+            <div class="results" id="results" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedFiles = [];
+        let quizData = null;
+        let userAnswers = {};
+
+        const uploadSection = document.getElementById('uploadSection');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const generateBtn = document.getElementById('generateBtn');
+        const loading = document.getElementById('loading');
+        const quizSection = document.getElementById('quizSection');
+        const errorMsg = document.getElementById('errorMsg');
+
+        // Drag and Drop
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        });
+
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('dragover');
+        });
+
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            handleFiles(files);
+        });
+
+        function handleFiles(files) {
+            uploadedFiles = uploadedFiles.concat(files);
+            updateFileList();
+            generateBtn.disabled = uploadedFiles.length === 0;
+        }
+
+        function updateFileList() {
+            fileList.innerHTML = '';
+            uploadedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <span>📎 ${file.name} (${(file.size / 1024).toFixed(2)} KB)</span>
+                    <button class="remove-btn" onclick="removeFile(${index})">Entfernen</button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            updateFileList();
+            generateBtn.disabled = uploadedFiles.length === 0;
+        }
+
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.classList.add('show');
+            setTimeout(() => {
+                errorMsg.classList.remove('show');
+            }, 5000);
+        }
+
+        async function generateQuiz() {
+            if (uploadedFiles.length === 0) {
+                showError('Bitte lade mindestens eine Datei hoch.');
+                return;
+            }
+
+            loading.classList.add('show');
+            generateBtn.disabled = true;
+            quizSection.innerHTML = '';
+            document.getElementById('results').style.display = 'none';
+
+            try {
+                const numQuestions = document.getElementById('numQuestions').value;
+                const difficulty = document.getElementById('difficulty').value;
+                const topic = document.getElementById('topic').value;
+
+                // Dateien in Base64 konvertieren
+                const fileContents = await Promise.all(
+                    uploadedFiles.map(file => convertFileToBase64(file))
+                );
+
+                // API-Aufruf an Claude
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 8000,
+                        messages: [
+                            {
+                                role: 'user',
+                                content: [
+                                    ...fileContents,
+                                    {
+                                        type: 'text',
+                                        text: `Erstelle ${numQuestions} Multiple-Choice-Fragen auf Deutsch mit Schwierigkeitsgrad "${difficulty}" basierend auf den hochgeladenen Dokumenten${topic ? ` zum Thema "${topic}"` : ''}. 
+
+Antworte NUR mit einem gültigen JSON-Objekt in diesem Format (ohne Markdown-Backticks oder Präambel):
+{
+  "questions": [
+    {
+      "question": "Fragetext",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctAnswer": 0,
+      "explanation": "Erklärung der richtigen Antwort"
+    }
+  ]
+}
+
+Die Fragen sollen relevante Konzepte aus dem Material abdecken.`
+                                    }
+                                ]
+                            }
+                        ]
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Response:', errorText);
+                    throw new Error(`API-Fehler: ${response.status} - ${errorText}`);
+                }
+
+                const data = await response.json();
+                console.log('API Response:', data);
+                
+                let quizText = data.content.find(c => c.type === 'text')?.text || '';
+                
+                // Bereinige die Antwort von Markdown-Backticks
+                quizText = quizText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+                
+                console.log('Quiz Text:', quizText);
+                quizData = JSON.parse(quizText);
+                userAnswers = {};
+                
+                displayQuiz();
+                loading.classList.remove('show');
+            } catch (error) {
+                console.error('Fehler:', error);
+                showError(`Fehler beim Generieren des Quiz: ${error.message}`);
+                loading.classList.remove('show');
+                generateBtn.disabled = false;
+            }
+        }
+
+        async function convertFileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64Data = reader.result.split(',')[1];
+                    
+                    if (file.type === 'application/pdf') {
+                        resolve({
+                            type: 'document',
+                            source: {
+                                type: 'base64',
+                                media_type: 'application/pdf',
+                                data: base64Data
+                            }
+                        });
+                    } else if (file.type.startsWith('image/')) {
+                        resolve({
+                            type: 'image',
+                            source: {
+                                type: 'base64',
+                                media_type: file.type,
+                                data: base64Data
+                            }
+                        });
+                    } else {
+                        // Text-Dateien
+                        const text = atob(base64Data);
+                        resolve({
+                            type: 'text',
+                            text: `Inhalt von ${file.name}:\n${text}`
+                        });
+                    }
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function displayQuiz() {
+            quizSection.innerHTML = '<h2 style="margin-bottom: 20px;">🎓 Dein Quiz</h2>';
+            
+            quizData.questions.forEach((q, qIndex) => {
+                const questionCard = document.createElement('div');
+                questionCard.className = 'question-card';
+                questionCard.id = `question-${qIndex}`;
+                
+                let optionsHTML = '';
+                q.options.forEach((option, oIndex) => {
+                    optionsHTML += `
+                        <div class="answer-option" data-question="${qIndex}" data-option="${oIndex}" onclick="selectAnswer(${qIndex}, ${oIndex})">
+                            ${String.fromCharCode(65 + oIndex)}. ${option}
+                        </div>
+                    `;
+                });
+                
+                questionCard.innerHTML = `
+                    <div class="question-header">Frage ${qIndex + 1}: ${q.question}</div>
+                    ${optionsHTML}
+                    <button class="check-btn" onclick="checkAnswer(${qIndex})">Antwort überprüfen</button>
+                    <div class="explanation" id="explanation-${qIndex}">
+                        <strong>✓ Richtig!</strong><br>
+                        ${q.explanation}
+                    </div>
+                `;
+                
+                quizSection.appendChild(questionCard);
+            });
+
+            const submitBtn = document.createElement('button');
+            submitBtn.className = 'generate-btn';
+            submitBtn.textContent = '📊 Gesamtergebnis anzeigen';
+            submitBtn.style.marginTop = '20px';
+            submitBtn.onclick = showResults;
+            quizSection.appendChild(submitBtn);
+
+            generateBtn.disabled = false;
+        }
+
+        function selectAnswer(questionIndex, optionIndex) {
+            // Entferne vorherige Auswahl
+            const options = document.querySelectorAll(`[data-question="${questionIndex}"]`);
+            options.forEach(opt => opt.classList.remove('selected'));
+            
+            // Setze neue Auswahl
+            const selected = document.querySelector(`[data-question="${questionIndex}"][data-option="${optionIndex}"]`);
+            selected.classList.add('selected');
+            
+            userAnswers[questionIndex] = optionIndex;
+        }
+
+        function checkAnswer(questionIndex) {
+            if (userAnswers[questionIndex] === undefined) {
+                showError('Bitte wähle erst eine Antwort aus.');
+                return;
+            }
+
+            const question = quizData.questions[questionIndex];
+            const userAnswer = userAnswers[questionIndex];
+            const options = document.querySelectorAll(`[data-question="${questionIndex}"]`);
+            
+            options.forEach((opt, idx) => {
+                opt.style.pointerEvents = 'none';
+                if (idx === question.correctAnswer) {
+                    opt.classList.add('correct');
+                } else if (idx === userAnswer) {
+                    opt.classList.add('incorrect');
+                }
+            });
+
+            document.getElementById(`explanation-${questionIndex}`).classList.add('show');
+        }
+
+        function showResults() {
+            let correct = 0;
+            quizData.questions.forEach((q, idx) => {
+                if (userAnswers[idx] === q.correctAnswer) {
+                    correct++;
+                }
+            });
+
+            const total = quizData.questions.length;
+            const percentage = ((correct / total) * 100).toFixed(0);
+            
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <h2>🎉 Quiz abgeschlossen!</h2>
+                <p style="font-size: 1.5em; margin: 15px 0;">
+                    Du hast <strong>${correct}</strong> von <strong>${total}</strong> Fragen richtig beantwortet
+                </p>
+                <p style="font-size: 2em; color: #000000; font-weight: bold;">
+                    ${percentage}%
+                </p>
+            `;
+            resultsDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
